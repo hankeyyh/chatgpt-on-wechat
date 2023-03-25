@@ -32,7 +32,7 @@ class PluginManager:
         return wrapper
 
     def save_config(self):
-        with open("plugins/plugins.json", "w", encoding="utf-8") as f:
+        with open("./plugins/plugins.json", "w", encoding="utf-8") as f:
             json.dump(self.pconf, f, indent=4, ensure_ascii=False)
 
     def load_config(self):
@@ -53,7 +53,7 @@ class PluginManager:
 
     def scan_plugins(self):
         logger.info("Scaning plugins ...")
-        plugins_dir = "plugins"
+        plugins_dir = "./plugins"
         for plugin_name in os.listdir(plugins_dir):
             plugin_path = os.path.join(plugins_dir, plugin_name)
             if os.path.isdir(plugin_path):
