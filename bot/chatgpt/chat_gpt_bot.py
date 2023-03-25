@@ -76,6 +76,16 @@ class ChatGPTBot(Bot):
             reply = Reply(ReplyType.ERROR, 'Bot不支持处理{}类型的消息'.format(context.type))
             return reply
 
+    def compose_args(self):
+        return {
+            "model": conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称
+            "temperature":conf().get('temperature', 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
+            # "max_tokens":4096,  # 回复最大的字符数
+            "top_p":1,
+            "frequency_penalty":conf().get('frequency_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+            "presence_penalty":conf().get('presence_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+        }
+
     def reply_text(self, session, session_id, retry_count=0) -> dict:
         '''
         call openai's ChatCompletion to get the answer
@@ -88,13 +98,7 @@ class ChatGPTBot(Bot):
             if conf().get('rate_limit_chatgpt') and not self.tb4chatgpt.get_token():
                 return {"completion_tokens": 0, "content": "提问太快啦，请休息一下再问我吧"}
             response = openai.ChatCompletion.create(
-                model= conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称
-                messages=session,
-                temperature=conf().get('temperature', 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
-                #max_tokens=4096,  # 回复最大的字符数
-                top_p=1,
-                frequency_penalty=conf().get('frequency_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-                presence_penalty=conf().get('presence_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                messages=session, **self.compose_args()
             )
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             return {"total_tokens": response["usage"]["total_tokens"],
@@ -148,6 +152,19 @@ class ChatGPTBot(Bot):
         except Exception as e:
             logger.exception(e)
             return False, str(e)
+
+
+class AzureChatGPTBot(ChatGPTBot):
+    def __init__(self):
+        super().__init__()
+        openai.api_type = "azure"
+        openai.api_version = "2023-03-15-preview"
+
+    def compose_args(self):
+        args = super().compose_args()
+        args["engine"] = args["model"]
+        del(args["model"])
+        return args
 
 
 class SessionManager(object):
