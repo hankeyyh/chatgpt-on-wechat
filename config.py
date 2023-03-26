@@ -4,7 +4,7 @@ import json
 import os
 from common.log import logger
 
-# 将所有可用的配置项写在字典里
+# 将所有可用的配置项写在字典里, 请使用小写字母
 available_setting ={
     #openai api配置
     "open_ai_api_key": "", # openai api key
@@ -17,6 +17,7 @@ available_setting ={
     "single_chat_prefix": ["bot", "@bot"], # 私聊时文本需要包含该前缀才能触发机器人回复
     "single_chat_reply_prefix": "[bot] ", # 私聊时自动回复的前缀，用于区分真人
     "group_chat_prefix": ["@bot"], # 群聊时包含该前缀则会触发机器人回复
+    "group_chat_reply_prefix": "", # 群聊时自动回复的前缀
     "group_chat_keyword": [], # 群聊时包含该关键词则会触发机器人回复
     "group_at_off": False, # 是否关闭群聊时@bot的触发
     "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
@@ -97,15 +98,21 @@ def load_config():
         config_path = "./config-template.json"
 
     config_str = read_file(config_path)
+    logger.debug("[INIT] config str: {}".format(config_str))
+
     # 将json字符串反序列化为dict类型
     config = Config(json.loads(config_str))
 
     # override config with environment variables.
     # Some online deployment platforms (e.g. Railway) deploy project from github directly. So you shouldn't put your secrets like api key in a config file, instead use environment variables to override the default config.
     for name, value in os.environ.items():
+        name = name.lower()
         if name in available_setting:
             logger.info("[INIT] override config by environ args: {}={}".format(name, value))
-            config[name] = value
+            try:
+                config[name] = eval(value)
+            except:
+                config[name] = value
 
     logger.info("[INIT] load config: {}".format(config))
 
