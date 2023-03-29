@@ -1,0 +1,9 @@
+[Unit]
+Description=chatgpt daemon
+
+[Service]
+ExecStart=/path-to-your-program
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
